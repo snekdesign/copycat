@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.5.3'
+__version__ = '2022.5.16'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -12,6 +12,7 @@ import collections
 import ctypes.wintypes
 import inspect
 import itertools
+import keyword
 import msvcrt
 import operator
 import os
@@ -125,6 +126,8 @@ class _SecondaryPS1:
 
 
 def _annotate(key, value):
+    if not key.isidentifier() or keyword.iskeyword(key):
+        raise ValueError(f'{key!r} is not a valid identifier')
     _cat_wrapper.writelines([key, ': ', _repr(value), '\n'])
 
 
