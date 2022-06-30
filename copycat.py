@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.5.16'
+__version__ = '2022.6.30'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -23,6 +23,7 @@ import subprocess
 import sys
 import traceback
 import types
+import warnings
 
 import numpy as np
 
@@ -134,8 +135,18 @@ def _annotate(key, value):
 def _auto_import(name, globals_=None, level=0):
     try:
         module = __import__(name, globals_, None, (), level)
-    except ImportError:
-        raise AttributeError from None
+    except ImportError as e:
+        if level:
+            try:
+                message = f"{globals_['__name__']}.{name}"
+            except KeyError:
+                message = name
+        else:
+            message = str(e)
+            with warnings.catch_warnings():
+                warnings.simplefilter('always')
+                warnings.warn(message, ImportWarning, stacklevel=2)
+        raise AttributeError(message) from None
     if not hasattr(module, '__getattr__'):
         def __getattr__(name):
             return _auto_import(name, _module_dict(module), 1)
