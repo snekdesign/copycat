@@ -18,6 +18,7 @@ import operator
 import os
 import pprint
 import re
+import reprlib
 import shutil
 import subprocess
 import sys
@@ -52,7 +53,7 @@ def items(mapping):
     _cat_ready()
     for key, value in sorted(mapping.items()):
         if type(key) is not str:
-            raise TypeError('all keys must be string')
+            raise TypeError(f'key {reprlib.repr(key)} is not a string')
         _annotate(key, value)
 
 
@@ -128,7 +129,7 @@ class _SecondaryPS1:
 
 def _annotate(key, value):
     if not key.isidentifier() or keyword.iskeyword(key):
-        raise ValueError(f'{key!r} is not a valid identifier')
+        raise ValueError(f'{reprlib.repr(key)} is not a valid identifier')
     _cat_wrapper.writelines([key, ': ', _repr(value), '\n'])
 
 
@@ -358,10 +359,7 @@ def _repr_collection(name, obj):
 
 
 def _repr_literal(name, obj):
-    repr_ = f'Literal[{obj!r}]'
-    if len(repr_) > 42:
-        return name
-    return repr_
+    return f'Literal[{reprlib.repr(obj)}]'
 
 
 def _repr_mapping(name, obj):
