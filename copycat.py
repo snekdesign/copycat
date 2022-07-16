@@ -1,10 +1,10 @@
 __author__ = 'snekdesign'
-__version__ = '2022.6.30'
+__version__ = '2022.7.17'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
 See https://github.com/{__author__}/copycat for more information."""
-__all__ = ['m', 'np']
+__all__ = ()
 
 import atexit
 import builtins
@@ -25,14 +25,9 @@ import sys
 import traceback
 import types
 import warnings
+import __main__ as _main
 
 import numpy as np
-
-if __name__ == '__main__':
-    __main__ = types.ModuleType('__main__', __doc__)
-    __main__.__builtins__ = builtins
-else:
-    import __main__
 
 _QWERTY = 'qwertyuiopasdfghjklzxcvbnm'
 _SENTINEL = object()
@@ -218,9 +213,8 @@ def _init():
             _lazy_modules[module] = alias
 
     globals_ = globals()
-    for name in itertools.filterfalse(_main_dict.__contains__, __all__):
+    for name in itertools.filterfalse(_main_dict.__contains__, _main_publics):
         _main_dict[name] = globals_[name]
-        _main_all.append(name)
 
     np.set_printoptions(precision=4, suppress=True, floatmode='maxprec')
     sys.displayhook = displayhook
@@ -339,7 +333,7 @@ def _ps1_impl():
             return
     name = next(_varnames)
     _main_dict[name] = _last_value
-    _main_all.append(name)
+    _main_publics.append(name)
     sys.__stdout__.writelines(['\x1b[93m', name, ': ', _repr(_last_value),
                                '\x1b[0m\n'])
 
@@ -439,11 +433,25 @@ _type_vars = type.__dict__['__dict__'].__get__
 _module_vars = types.ModuleType.__dict__['__dict__'].__get__
 _builtin_dict = _module_vars(builtins)
 _builtin_values = _builtin_dict.values()
+
+__main__ = types.ModuleType('__main__', __doc__)
 _main_dict = _module_vars(__main__)
+_main_publics = ['m', 'np']
 _main_values = _main_dict.values()
-_main_all = _main_dict.setdefault('__all__', [])
-if not isinstance(_main_all, list):
-    raise TypeError('__main__.__all__ must be a list')
+if __name__ == '__main__':
+    __main__.__all__ = _main_publics
+    __main__.__builtins__ = builtins
+    # Avoid importing twice
+    sys.modules['copycat'] = _main
+    # Break reference cycle
+    del _main
+else:
+    _main_dict |= _module_vars(_main)
+    __main__.__all__ = _main_publics
+    try:
+        _main_publics += _main.__all__ # Duplicated entries are fine
+    except AttributeError:
+        pass
 
 _varnames = itertools.repeat(('1234567890'+_QWERTY,))
 _varnames = itertools.accumulate(_varnames, initial=(_QWERTY,))
