@@ -150,7 +150,7 @@ def _auto_import(name, globals_=None, level=0):
         raise AttributeError(message) from None
     if not hasattr(module, '__getattr__'):
         def __getattr__(name):
-            return _auto_import(name, _module_dict(module), 1)
+            return _auto_import(name, _module_vars(module), 1)
         module.__getattr__ = __getattr__
     return module
 
@@ -251,7 +251,7 @@ def _inspect_impl(obj, public, private, magic):
                 _annotate(key, obj_dict[key])
             return
         obj = sys.modules[obj_dict['__name__']]
-        if _module_dict(obj) is not obj_dict:
+        if _module_vars(obj) is not obj_dict:
             _cat_wrapper.write('Bad namespace')
             return
 
@@ -259,14 +259,14 @@ def _inspect_impl(obj, public, private, magic):
     if inspect.isclass(obj):
         seen = set()
         for cls in _mro(obj):
-            _summary(cls, _type_dict(cls), predicate, extra)
+            _summary(cls, _type_vars(cls), predicate, extra)
             seen.add(cls)
         for cls in itertools.filterfalse(seen.__contains__, mro):
-            _summary(cls, _type_dict(cls), predicate, extra)
+            _summary(cls, _type_vars(cls), predicate, extra)
         return
 
     if inspect.ismodule(obj):
-        obj_dict = _module_dict(obj)
+        obj_dict = _module_vars(obj)
         pred = predicate
         if public or private:
             try:
@@ -286,12 +286,12 @@ def _inspect_impl(obj, public, private, magic):
                         return True
         _summary('self', obj_dict, predicate, extra[1:])
         for cls in mro:
-            _summary(cls, _type_dict(cls), pred, extra)
+            _summary(cls, _type_vars(cls), pred, extra)
         return
 
     for cls in mro:
         try:
-            desc = _type_dict(cls)['__dict__']
+            desc = _type_vars(cls)['__dict__']
         except KeyError:
             pass
         else:
@@ -301,7 +301,7 @@ def _inspect_impl(obj, public, private, magic):
                 _summary('self', desc.__get__(obj), predicate, ())
                 break
     for cls in mro:
-        _summary(cls, _type_dict(cls), predicate, extra)
+        _summary(cls, _type_vars(cls), predicate, extra)
 
 
 def _maybe_set_back(name, module):
@@ -434,11 +434,12 @@ if not _console_mode.value & 4: # ENABLE_VIRTUAL_TERMINAL_PROCESSING
                   'Windows >= 10.0.10586.0 is required')
 
 _mro = type.__dict__['__mro__'].__get__
-_type_dict = type.__dict__['__dict__'].__get__
-_module_dict = types.ModuleType.__dict__['__dict__'].__get__
-_builtin_dict = _module_dict(builtins)
+# _xxx_vars stands for callables, while _xxx_dict stands for dict instances
+_type_vars = type.__dict__['__dict__'].__get__
+_module_vars = types.ModuleType.__dict__['__dict__'].__get__
+_builtin_dict = _module_vars(builtins)
 _builtin_values = _builtin_dict.values()
-_main_dict = _module_dict(__main__)
+_main_dict = _module_vars(__main__)
 _main_values = _main_dict.values()
 _main_all = _main_dict.setdefault('__all__', [])
 if not isinstance(_main_all, list):
