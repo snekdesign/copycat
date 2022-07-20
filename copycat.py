@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.7.17'
+__version__ = '2022.7.20'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -101,12 +101,13 @@ class _ModuleImporter:
 
 class _PrimaryPS1:
     def __str__(self):
-        try:
-            _init()
-            sys.ps1 = _SecondaryPS1()
-        except:
-            sys.ps1 = '>>> '
-            sys.__excepthook__(*sys.exc_info())
+        if sys._getframe().f_back is None:
+            try:
+                _init()
+                sys.ps1 = _SecondaryPS1()
+            except:
+                sys.ps1 = '>>> '
+                sys.__excepthook__(*sys.exc_info())
         return '>>> '
 
 
