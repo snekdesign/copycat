@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.7.20'
+__version__ = '2022.8.12'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -22,6 +22,7 @@ import reprlib
 import shutil
 import subprocess
 import sys
+import textwrap
 import traceback
 import types
 import warnings
@@ -97,6 +98,24 @@ class _ModuleImporter:
         module = _auto_import(name)
         _maybe_set_back(name, module)
         return module
+
+
+class _PrettyPrinter(pprint.PrettyPrinter):
+    _dispatch = pprint.PrettyPrinter._dispatch.copy()
+
+    def _pprint_ndarray(self, obj, stream, indent, allowance, context, level):
+        linewidth = self._width - indent - allowance
+        if newline := linewidth<75:
+            linewidth = self._width
+        with np.printoptions(linewidth=linewidth):
+            text = repr(obj)
+        if newline:
+            stream.write('\n')
+        elif indent:
+            text = textwrap.indent(text, ' '*indent, text.find)
+        stream.write(text)
+
+    _dispatch[np.ndarray.__repr__] = _pprint_ndarray
 
 
 class _PrimaryPS1:
@@ -320,11 +339,7 @@ def _ps1_impl():
     _cat_clear_screen()
     if _last_value is None:
         return
-    width = shutil.get_terminal_size().columns
-    if width < 42:
-        width = 80
-    _printer._width = width
-    np.set_printoptions(linewidth=width-5)
+    _printer._width = max(shutil.get_terminal_size().columns, 80)
     _printer.pprint(_last_value)
 
     if sys._getframe(1).f_back:
@@ -478,7 +493,7 @@ atexit.register(_cat.communicate)
 _cat_called = False
 _cat_wrapper = _cat.stdin
 print(__doc__, file=_cat_wrapper, flush=True)
-_printer = pprint.PrettyPrinter(stream=_cat_wrapper)
+_printer = _PrettyPrinter(stream=_cat_wrapper)
 
 os.environ['PYTHONINSPECT'] = '1'
 sys.ps1 = _PrimaryPS1()
