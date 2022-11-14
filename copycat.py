@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.8.12'
+__version__ = '2022.11.14'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -66,13 +66,16 @@ def publics(obj=_SENTINEL):
 
 
 if _vscode := shutil.which('code.cmd') or shutil.which('code-insiders.cmd'):
-    def source(obj):
-        obj = inspect.unwrap(obj)
-        file = inspect.getsourcefile(obj)
-        if not file:
-            raise OSError('source code not available')
-        _, line = inspect.getsourcelines(obj)
-        subprocess.run([_vscode, '-g', f'{file}:{line}'])
+    def source(obj=-1):
+        if type(obj) is int:
+            frame = inspect.getinnerframes(sys.last_traceback)[obj]
+            filename = frame.filename
+            lineno = frame.lineno
+        else:
+            obj = inspect.unwrap(obj)
+            _, lineno = inspect.getsourcelines(obj)
+            filename = inspect.getsourcefile(obj)
+        subprocess.run([_vscode, '-g', f'{filename}:{lineno}'])
 else:
     def source(obj):
         raise FileNotFoundError('code.cmd')

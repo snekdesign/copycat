@@ -7,7 +7,7 @@
   value to the output pane
 - Automatically import stdlib and 3rd-party libraries on demand
 - List public, private or magic members of any object
-- Browse source code of modules, classes and functions in VS Code
+- Browse source code of modules, classes, functions and exceptions in VS Code
 - Early-stopping on the first exception when multiple lines are pasted
 - Ready for `pdb` and NumPy
 ## Dependencies
@@ -91,6 +91,13 @@ u: module
 >>> source(u)
 >>> # Go to the implementation of `source` itself
 >>> source(source)
+>>> # classes and functions written in C are unsupported
+>>> source(int)
+# TypeError: <class 'int'> is a built-in class
+>>> # Go where the exception was raised, equivalent to `source(-1)`
+>>> source()
+>>> # ... or one level outer
+>>> source(-2)
 ```
 ## Tips and Tricks
 ### Debugging
