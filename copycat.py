@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.11.14'
+__version__ = '2022.11.17'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -139,7 +139,10 @@ class _SecondaryPS1:
         try:
             _ps1_impl()
         except:
-            excepthook(*sys.exc_info())
+            sys.last_type, sys.last_value, sys.last_traceback = sys.exc_info()
+            # _ps1_impl() has cleared the screen, so just print the exception
+            traceback.print_exc(file=_cat_wrapper)
+            ctypes.windll.kernel32.FlushConsoleInputBuffer(_stdin_handle)
         _last_value = None
         _cat_wrapper.flush()
         return '>>> '
