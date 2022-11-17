@@ -346,7 +346,19 @@ def _ps1_impl():
     if _last_value is None:
         return
     _printer._width = max(shutil.get_terminal_size().columns, 80)
-    _printer.pprint(_last_value)
+    try:
+        _printer.pprint(_last_value)
+    except Exception as e:
+        tb = e.__traceback__.tb_next
+        while tb and tb.tb_frame.f_code.co_filename == pprint.__file__:
+            tb = tb.tb_next
+        sys.last_type = type(e)
+        sys.last_value = e.with_traceback(tb)
+        sys.last_traceback = tb
+        _cat_clear_screen()
+        _cat_wrapper.write('Object not printable\n\n')
+        traceback.print_exception(e, file=_cat_wrapper)
+        ctypes.windll.kernel32.FlushConsoleInputBuffer(_stdin_handle)
 
     if sys._getframe(1).f_back:
         return
