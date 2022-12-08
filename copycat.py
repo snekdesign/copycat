@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.11.17'
+__version__ = '2022.12.8'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -65,7 +65,7 @@ def publics(obj=_SENTINEL):
     _inspect(obj, public=True)
 
 
-if _vscode := shutil.which('code.cmd') or shutil.which('code-insiders.cmd'):
+if _vscode := shutil.which('code') or shutil.which('code-insiders.cmd'):
     def source(obj=-1):
         if type(obj) is int:
             frame = inspect.getinnerframes(sys.last_traceback)[obj]
@@ -78,7 +78,7 @@ if _vscode := shutil.which('code.cmd') or shutil.which('code-insiders.cmd'):
         subprocess.run([_vscode, '-g', f'{filename}:{lineno}'])
 else:
     def source(obj):
-        raise FileNotFoundError('code.cmd')
+        raise FileNotFoundError('code')
 
 
 class _LazyModule(types.ModuleType):
