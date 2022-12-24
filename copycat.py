@@ -1,5 +1,5 @@
 __author__ = 'snekdesign'
-__version__ = '2022.12.8'
+__version__ = '2022.12.24'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -278,10 +278,10 @@ def _inspect_impl(obj, public, private, magic):
             _cat_wrapper.write('Bad namespace')
             return
 
-    mro = _mro(type(obj))
+    mro = _getmro(type(obj))
     if inspect.isclass(obj):
         seen = set()
-        for cls in _mro(obj):
+        for cls in _getmro(obj):
             _summary(cls, _type_vars(cls), predicate, extra)
             seen.add(cls)
         for cls in itertools.filterfalse(seen.__contains__, mro):
@@ -350,7 +350,7 @@ def _ps1_impl():
         _printer.pprint(_last_value)
     except Exception as e:
         tb = e.__traceback__.tb_next
-        while tb and tb.tb_frame.f_code.co_filename == pprint.__file__:
+        while tb and inspect.getsourcefile(tb) == pprint.__file__:
             tb = tb.tb_next
         sys.last_type = type(e)
         sys.last_value = e.with_traceback(tb)
@@ -464,7 +464,7 @@ if not _console_mode.value & 4: # ENABLE_VIRTUAL_TERMINAL_PROCESSING
                   if sys.getwindowsversion().build >= 10586 else
                   'Windows >= 10.0.10586.0 is required')
 
-_mro = type.__dict__['__mro__'].__get__
+_getmro = type.__dict__['__mro__'].__get__
 # _xxx_vars stands for callables, while _xxx_dict stands for dict instances
 _type_vars = type.__dict__['__dict__'].__get__
 _module_vars = types.ModuleType.__dict__['__dict__'].__get__
