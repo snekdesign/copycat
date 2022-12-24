@@ -228,13 +228,9 @@ def _init():
         ('pc', 'pyarrow.compute'),
         ('pd', 'pandas'),
         ('plt', 'matplotlib.pyplot'),
-        ('pq', 'pyarrow.parquet'),
         ('scipy', 'scipy'),
         ('sklearn', 'sklearn'),
-        ('sm', 'statsmodels.api'),
-        ('sns', 'seaborn'),
         ('torch', 'torch'),
-        ('tsa', 'statsmodels.tsa.api'),
         ('xr', 'xarray'),
     ]:
         if alias not in _main_dict:
