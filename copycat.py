@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+
 __author__ = 'snekdesign'
-__version__ = '2022.12.24'
+__version__ = '2022.12.25'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022 {__author__}
 
@@ -9,11 +11,9 @@ __all__ = ()
 import atexit
 import builtins
 import collections
-import ctypes.wintypes
 import inspect
 import itertools
 import keyword
-import msvcrt
 import operator
 import os
 import pprint
@@ -22,6 +22,12 @@ import reprlib
 import shutil
 import subprocess
 import sys
+if sys.platform == 'win32':
+    import ctypes.wintypes
+    import msvcrt
+else:
+    import tempfile
+    import termios
 import textwrap
 import traceback
 import types
@@ -42,7 +48,7 @@ def displayhook(value):
 def excepthook(et, exc, tb):
     _cat_ready()
     traceback.print_exception(et, exc, tb, file=_cat_wrapper)
-    ctypes.windll.kernel32.FlushConsoleInputBuffer(_stdin_handle)
+    _tcflush()
 
 
 def items(mapping):
@@ -65,7 +71,7 @@ def publics(obj=_SENTINEL):
     _inspect(obj, public=True)
 
 
-if _vscode := shutil.which('code') or shutil.which('code-insiders.cmd'):
+if _vscode := shutil.which('code') or shutil.which('code-insiders'):
     def source(obj=-1):
         if type(obj) is int:
             frame = inspect.getinnerframes(sys.last_traceback)[obj]
@@ -142,9 +148,12 @@ class _SecondaryPS1:
             sys.last_type, sys.last_value, sys.last_traceback = sys.exc_info()
             # _ps1_impl() has cleared the screen, so just print the exception
             traceback.print_exc(file=_cat_wrapper)
-            ctypes.windll.kernel32.FlushConsoleInputBuffer(_stdin_handle)
+            _tcflush()
         _last_value = None
-        _cat_wrapper.flush()
+        try:
+            _cat_wrapper.flush()
+        except BrokenPipeError:
+            os._exit(1)
         return '>>> '
 
 
@@ -174,12 +183,6 @@ def _auto_import(name, globals_=None, level=0):
             return _auto_import(name, _module_vars(module), 1)
         module.__getattr__ = __getattr__
     return module
-
-
-def _cat_clear_screen():
-    if _cat.poll() is not None:
-        os._exit(_cat.returncode or 1)
-    _cat_wrapper.write('\x1bc')
 
 
 def _cat_ready():
@@ -354,7 +357,7 @@ def _ps1_impl():
         _cat_clear_screen()
         _cat_wrapper.write('Object not printable\n\n')
         traceback.print_exception(e, file=_cat_wrapper)
-        ctypes.windll.kernel32.FlushConsoleInputBuffer(_stdin_handle)
+        _tcflush()
 
     if sys._getframe(1).f_back:
         return
@@ -450,16 +453,6 @@ def _summary(obj, obj_dict, predicate, extra):
 
 m = _ModuleImporter()
 
-_console_mode = ctypes.wintypes.DWORD()
-ctypes.windll.kernel32.GetConsoleMode(msvcrt.get_osfhandle(1),
-                                      ctypes.byref(_console_mode))
-if not _console_mode.value & 4: # ENABLE_VIRTUAL_TERMINAL_PROCESSING
-    raise OSError('VT sequences are disabled. You can enable them by setting '
-                  r'HKCU\Console\VirtualTerminalLevel globally, or calling '
-                  'SetConsoleMode() locally.'
-                  if sys.getwindowsversion().build >= 10586 else
-                  'Windows >= 10.0.10586.0 is required')
-
 _getmro = type.__dict__['__mro__'].__get__
 # _xxx_vars stands for callables, while _xxx_dict stands for dict instances
 _type_vars = type.__dict__['__dict__'].__get__
@@ -497,15 +490,55 @@ _varnames = itertools.filterfalse(_main_dict.__contains__, _varnames)
 _dispatch = {tuple: _repr_tuple, type: _repr_type, types.NoneType: _repr_none}
 _last_value = None
 _lazy_modules = {}
-_stdin_handle = msvcrt.get_osfhandle(0)
 
-_cat = subprocess.Popen('cat',
-                        stdin=subprocess.PIPE,
-                        creationflags=subprocess.CREATE_NEW_CONSOLE,
-                        encoding='locale')
-atexit.register(_cat.communicate)
+if sys.platform == 'win32':
+    _console_mode = ctypes.wintypes.DWORD()
+    ctypes.windll.kernel32.GetConsoleMode(msvcrt.get_osfhandle(1),
+                                          ctypes.byref(_console_mode))
+    if not _console_mode.value & 4: # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        raise OSError('VT sequences are disabled. You can enable them by '
+                      r'setting HKCU\Console\VirtualTerminalLevel globally, '
+                      'or calling SetConsoleMode() locally.'
+                      if sys.getwindowsversion().build >= 10586 else
+                      'Windows >= 10.0.10586.0 is required')
+
+
+    def _cat_clear_screen():
+        if _cat.poll() is not None:
+            os._exit(_cat.returncode or 1)
+        _cat_wrapper.write('\x1bc')
+
+
+    def _tcflush():
+        ctypes.windll.kernel32.FlushConsoleInputBuffer(_stdin_handle)
+
+
+    _stdin_handle = msvcrt.get_osfhandle(0)
+    _cat = subprocess.Popen('cat',
+                            stdin=subprocess.PIPE,
+                            creationflags=subprocess.CREATE_NEW_CONSOLE,
+                            encoding='locale')
+    atexit.register(_cat.communicate)
+    _cat_wrapper = _cat.stdin
+else:
+    def _cat_clear_screen():
+        _cat_wrapper.write('\x1bc')
+
+
+    def _tcflush():
+        termios.tcflush(0, termios.TCIOFLUSH)
+
+
+    _path = tempfile.mkdtemp()
+    atexit.register(shutil.rmtree, _path)
+    _path = os.path.join(_path, 'copycat')
+    os.mkfifo(_path)
+    subprocess.run(['wt.exe', 'sp', 'wsl', '-e', 'cat', _path, ';',
+                    'mf', 'left'])
+    _cat_wrapper = open(_path, 'w', encoding='utf-8')
+    atexit.register(_cat_wrapper.close)
+
 _cat_called = False
-_cat_wrapper = _cat.stdin
 print(__doc__, file=_cat_wrapper, flush=True)
 _printer = _PrettyPrinter(stream=_cat_wrapper)
 

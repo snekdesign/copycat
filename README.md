@@ -1,5 +1,5 @@
 # CoPyCat - Another Enhanced Interactive Python Shell
-[![][1]][2] [![][3]][4] ![][5] ![][6]
+[![][1]][2] [![][3]][4] ![][5]
 ## Features
 - Dual panes, one for input and the other for output
 - Automatically assign the value of any top-level expression to an unused
@@ -11,18 +11,32 @@
 - Early-stopping on the first exception when multiple lines are pasted
 - Ready for `pdb` and NumPy
 ## Dependencies
-- Windows >= 10.0.10586.0
+### For all platforms
 - Python >= 3.10.0
-- `cat` from Cygwin, WSL or somewhere else  
-  If you are using WSL, replace `'cat'` with `'wsl -e cat'` in the source  
-  In fact, a full-featured `cat` is unnecessary.
-  If you have a C compiler installed, simply compile [this][7]
 - NumPy >= 1.21.3
-- VS Code (Optional, for code navigation)  
-  `code.cmd` or `code-insiders.cmd` should exist in `PATH`
+- VS Code (Optional, for code navigation)
+  - For Windows:  
+    `code.cmd`, `code.exe` (the standalone CLI, not the Electron one)
+    or `code-insiders.cmd` should exist in `PATH`
+  - For WSL and non-Windows platforms:  
+    `code` or `code-insiders` should exist in `$PATH`
+- For non-Windows platforms, you have to set the terminal for `cat`
+  at the end of [copycat.py][6], as there are too many choices
+### Extra dependencies for Windows
+- Windows >= 10.0.10586.0
+- `cat` from Cygwin, WSL or somewhere else  
+  For example, you can run the following command to use `cat` from WSL
+  along with Python from Windows:
+  ```sh
+  sed -i "s/Popen('cat',/Popen('wsl -e cat',/" path/to/copycat.py
+  ```
+  In fact, a full-featured `cat` is unnecessary for Windows.
+  If you have a C compiler installed, simply compile [this][7]
 ## Usage
 ### Launch
-There are various ways to launch `copycat`:
+There are various ways to launch `copycat`.
+
+For Windows:
 ```powershell
 PS D:\> # Run as `__main__`
 PS D:\> python copycat.py
@@ -32,6 +46,17 @@ PS D:\> # Register as `PYTHONSTARTUP`
 PS D:\> $Env:PYTHONSTARTUP = Convert-Path copycat.py
 PS D:\> python
 ```
+For WSL and non-Windows platforms:
+```sh
+# Run as `__main__`
+$ copycat.py
+```
+```sh
+# Register as `PYTHONSTARTUP`
+$ export PYTHONSTARTUP=`which copycat.py`
+$ python3
+```
+Within Python:
 ```py
 >>> # Import from Python REPL
 >>> import copycat
@@ -110,11 +135,13 @@ u: module
   the command `w(here)` is what you need.
 - Use the command `q(uit)` or Ctrl+Z to quit from the debugger and
   continue your work.
-### [Windows Terminal][8] Integration
-- On Windows 11, if Windows Terminal (stable or preview) is set to default
+### (Windows-only) Windows Terminal (`wt`) Integration
+- On Windows 11, if `wt` (stable or preview) is set to default
   terminal, `cat` will be opened inside.
 - You can use the action `movePane` to move Python and `cat` to the same tab.
-- With Windows Terminal >= 1.13.10336.0, you can use the action `exportBuffer`
+- For WSL, `wt` integration works out of the box, so you don't need the steps
+  above.
+- With `wt` >= 1.13.10336.0, you can use the action `exportBuffer`
   to save current contents of `cat` as a file.
 ## Configuration
 In consideration of performance, there is no plan for any means of
@@ -135,7 +162,6 @@ configuration. Please modify the code in place.
 [2]: https://github.com/snekdesign/copycat/blob/main/LICENSE#L1-L339
 [3]: https://img.shields.io/badge/license-Anti--996-blue.svg
 [4]: https://github.com/snekdesign/copycat/blob/main/LICENSE#L343-L388
-[5]: https://img.shields.io/badge/platform-windows-lightgrey.svg
-[6]: https://img.shields.io/badge/python-3.10_%7C_3.11-blue.svg
+[5]: https://img.shields.io/badge/python-3.10_%7C_3.11-blue.svg
+[6]: https://github.com/snekdesign/copycat/blob/main/copycat.py#L536-L537
 [7]: https://rosettacode.org/wiki/Copy_stdin_to_stdout#C
-[8]: https://github.com/microsoft/terminal
