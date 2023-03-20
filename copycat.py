@@ -34,12 +34,11 @@ import types
 import warnings
 import __main__ as _main
 
-readline = jedi = None
 try:
     import readline # pyreadline3 on Windows
     import jedi.utils
 except ImportError:
-    pass
+    jedi = None
 import numpy as np
 
 _QWERTY = 'qwertyuiopasdfghjklzxcvbnm'
@@ -280,7 +279,9 @@ def _init():
     sys.excepthook = excepthook
     sys.modules['__main__'] = __main__
     if jedi:
-        jedi.utils.setup_readline(__main__)
+        # Set fuzzy=True to enable fuzzy completions,
+        # e.g. `ooa` will match `foobar`
+        jedi.utils.setup_readline(__main__, fuzzy=False)
 
 
 def _inspect(obj, public=False, private=False, magic=False):
