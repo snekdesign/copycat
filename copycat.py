@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 __author__ = 'snekdesign'
-__version__ = '2022.12.25'
+__version__ = '2023.3.20'
 __doc__ = f"""CoPyCat {__version__}
-Copyright (c) 2022 {__author__}
+Copyright (c) 2022-2023 {__author__}
 
 See https://github.com/{__author__}/copycat for more information."""
 __all__ = ()
@@ -34,6 +34,12 @@ import types
 import warnings
 import __main__ as _main
 
+readline = jedi = None
+try:
+    import readline # pyreadline3 on Windows
+    import jedi.utils
+except ImportError:
+    pass
 import numpy as np
 
 _QWERTY = 'qwertyuiopasdfghjklzxcvbnm'
@@ -90,8 +96,20 @@ else:
 class _LazyModule(types.ModuleType):
     __repr__ = object.__repr__
 
+    def __dir__(self):
+        try:
+            module = _auto_import(self.__name__)
+        except AttributeError:
+            return super().__dir__()
+        module = self.__resolve(module)
+        return dir(module)
+
     def __getattr__(self, name):
         module = _auto_import(self.__name__)
+        module = self.__resolve(module)
+        return getattr(module, name)
+
+    def __resolve(self, module):
         try:
             _, attr = self.__name__.split('.', 1)
         except ValueError:
@@ -99,7 +117,7 @@ class _LazyModule(types.ModuleType):
         else:
             module = operator.attrgetter(attr)(module)
         _maybe_set_back(_lazy_modules[self], module)
-        return getattr(module, name)
+        return module
 
 
 class _ModuleImporter:
@@ -174,9 +192,22 @@ def _auto_import(name, globals_=None, level=0):
                 message = name
         else:
             message = str(e)
-            with warnings.catch_warnings():
-                warnings.simplefilter('always')
-                warnings.warn(message, ImportWarning, stacklevel=2)
+            # Don't emit warnings on autocompletion
+            files = []
+            for completer in 'jedi.utils', 'rlcompleter':
+                try:
+                    module = sys.modules[completer]
+                except KeyError:
+                    pass
+                else:
+                    files.append(module.__file__)
+            for frame in inspect.stack():
+                if frame.filename in files:
+                    break
+            else:
+                with warnings.catch_warnings():
+                    warnings.simplefilter('always')
+                    warnings.warn(message, ImportWarning, stacklevel=2)
         raise AttributeError(message) from None
     if not hasattr(module, '__getattr__'):
         def __getattr__(name):
@@ -248,6 +279,8 @@ def _init():
     sys.displayhook = displayhook
     sys.excepthook = excepthook
     sys.modules['__main__'] = __main__
+    if jedi:
+        jedi.utils.setup_readline(__main__)
 
 
 def _inspect(obj, public=False, private=False, magic=False):

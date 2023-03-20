@@ -14,6 +14,8 @@
 ### For all platforms
 - Python >= 3.10.0
 - NumPy >= 1.21.3
+- Jedi >= 0.18.1 (Optional, for autocompletion)
+  - `pyreadline3` is also needed for Windows support
 - VS Code (Optional, for code navigation)
   - For Windows:  
     `code.cmd`, `code.exe` (the standalone CLI, not the Electron one)
