@@ -3,7 +3,7 @@
 __author__ = 'snekdesign'
 __version__ = '2023.3.20'
 __doc__ = f"""CoPyCat {__version__}
-Copyright (c) 2022-2023 {__author__}
+Copyright (c) 2022-{__version__[:4]} {__author__}
 
 See https://github.com/{__author__}/copycat for more information."""
 __all__ = ()
