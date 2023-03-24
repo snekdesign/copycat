@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'snekdesign'
-__version__ = '2023.3.20'
+__version__ = '2023.3.24'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022-{__version__[:4]} {__author__}
 
@@ -84,8 +84,21 @@ if _vscode := shutil.which('code') or shutil.which('code-insiders'):
             lineno = frame.lineno
         else:
             obj = inspect.unwrap(obj)
-            _, lineno = inspect.getsourcelines(obj)
-            filename = inspect.getsourcefile(obj)
+            try:
+                _, lineno = inspect.getsourcelines(obj)
+            except OSError as e:
+                # Functions in frozen modules cannot be retrieved, because of
+                # https://github.com/python/cpython/issues/89815
+                # This is a temporary solution
+                if not inspect.isfunction(obj):
+                    raise
+                try:
+                    filename = sys.modules[obj.__module__].__file__
+                    lineno = obj.__code__.co_firstlineno
+                except Exception:
+                    raise e from None
+            else:
+                filename = inspect.getsourcefile(obj)
         subprocess.run([_vscode, '-g', f'{filename}:{lineno}'])
 else:
     def source(obj):
