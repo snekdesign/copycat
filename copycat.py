@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'snekdesign'
-__version__ = '2023.3.24'
+__version__ = '2023.9.8'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022-{__version__[:4]} {__author__}
 
@@ -444,7 +444,7 @@ def _repr_mapping(name, obj):
 
 
 def _repr_ndarray(name, obj):
-    return f'{name}[Any, {type(obj.dtype).__name__}]'
+    return f'{name}[Any, dtype[{obj.dtype}]]'
 
 
 def _repr_none(name, obj):
