@@ -164,6 +164,6 @@ configuration. Please modify the code in place.
 [2]: https://github.com/snekdesign/copycat/blob/main/LICENSE#L1-L339
 [3]: https://img.shields.io/badge/license-Anti--996-blue.svg
 [4]: https://github.com/snekdesign/copycat/blob/main/LICENSE#L343-L388
-[5]: https://img.shields.io/badge/python-3.10_%7C_3.11-blue.svg
+[5]: https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12-blue.svg
 [6]: https://github.com/snekdesign/copycat/blob/main/copycat.py#L583-L584
 [7]: https://rosettacode.org/wiki/Copy_stdin_to_stdout#C
