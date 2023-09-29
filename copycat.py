@@ -308,7 +308,7 @@ def _init():
 
 
 def _input(prompt='', /):
-    return _builtins_input(prompt+'\x1b]133;B\a')
+    return _builtins_input(f'{prompt}\x1b]133;B\a')
 
 
 def _inspect(obj, public=False, private=False, magic=False):
