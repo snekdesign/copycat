@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'snekdesign'
-__version__ = '2023.9.8'
+__version__ = '2023.9.29'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022-{__version__[:4]} {__author__}
 
@@ -164,9 +164,9 @@ class _PrimaryPS1:
                 _init()
                 sys.ps1 = _SecondaryPS1()
             except:
-                sys.ps1 = '>>> '
+                sys.ps1 = '>>> \x1b]133;B\a'
                 sys.__excepthook__(*sys.exc_info())
-        return '>>> '
+        return '>>> \x1b]133;B\a'
 
 
 class _SecondaryPS1:
