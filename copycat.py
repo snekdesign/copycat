@@ -42,7 +42,8 @@ except ImportError:
     jedi = None
 import numpy as np
 
-_PS1 = '>>> \x1b]133;B\a'
+_OSC_133_B_ST = '\x1b]133;B\a'
+_PS1 = '>>> ' + _OSC_133_B_ST
 _QWERTY = 'qwertyuiopasdfghjklzxcvbnm'
 _SENTINEL = object()
 
@@ -144,7 +145,7 @@ class _ModuleImporter:
 class _Pdb(pdb.Pdb):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prompt += '\x1b]133;B\a'
+        self.prompt += _OSC_133_B_ST
 
 
 class _PrettyPrinter(pprint.PrettyPrinter):
@@ -300,6 +301,7 @@ def _init():
     pdb.Pdb = _Pdb
     sys.displayhook = displayhook
     sys.excepthook = excepthook
+    sys.ps2 = '... ' + _OSC_133_B_ST
     sys.modules['__main__'] = __main__
     if jedi:
         # Set fuzzy=True to enable fuzzy completions,
@@ -308,7 +310,7 @@ def _init():
 
 
 def _input(prompt='', /):
-    return _builtins_input(f'{prompt}\x1b]133;B\a')
+    return _builtins_input(f'{prompt}{_OSC_133_B_ST}')
 
 
 def _inspect(obj, public=False, private=False, magic=False):
