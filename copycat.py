@@ -16,6 +16,7 @@ import itertools
 import keyword
 import operator
 import os
+import pdb
 import pprint
 import re
 import reprlib
@@ -41,6 +42,7 @@ except ImportError:
     jedi = None
 import numpy as np
 
+_PS1 = '>>> \x1b]133;B\a'
 _QWERTY = 'qwertyuiopasdfghjklzxcvbnm'
 _SENTINEL = object()
 
@@ -139,6 +141,12 @@ class _ModuleImporter:
         return module
 
 
+class _Pdb(pdb.Pdb):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prompt += '\x1b]133;B\a'
+
+
 class _PrettyPrinter(pprint.PrettyPrinter):
     _dispatch = pprint.PrettyPrinter._dispatch.copy()
 
@@ -164,9 +172,9 @@ class _PrimaryPS1:
                 _init()
                 sys.ps1 = _SecondaryPS1()
             except:
-                sys.ps1 = '>>> \x1b]133;B\a'
+                sys.ps1 = _PS1
                 sys.__excepthook__(*sys.exc_info())
-        return '>>> \x1b]133;B\a'
+        return _PS1
 
 
 class _SecondaryPS1:
@@ -184,7 +192,7 @@ class _SecondaryPS1:
             _cat_wrapper.flush()
         except BrokenPipeError:
             os._exit(1)
-        return '>>> '
+        return _PS1
 
 
 def _annotate(key, value):
@@ -287,7 +295,9 @@ def _init():
     for name in itertools.filterfalse(_main_dict.__contains__, _main_publics):
         _main_dict[name] = globals_[name]
 
+    builtins.input = _input
     np.set_printoptions(precision=4, suppress=True, floatmode='maxprec')
+    pdb.Pdb = _Pdb
     sys.displayhook = displayhook
     sys.excepthook = excepthook
     sys.modules['__main__'] = __main__
@@ -295,6 +305,10 @@ def _init():
         # Set fuzzy=True to enable fuzzy completions,
         # e.g. `ooa` will match `foobar`
         jedi.utils.setup_readline(__main__, fuzzy=False)
+
+
+def _input(prompt='', /):
+    return _builtins_input(prompt+'\x1b]133;B\a')
 
 
 def _inspect(obj, public=False, private=False, magic=False):
@@ -506,6 +520,7 @@ _type_vars = type.__dict__['__dict__'].__get__
 _module_vars = types.ModuleType.__dict__['__dict__'].__get__
 _builtin_dict = _module_vars(builtins)
 _builtin_values = _builtin_dict.values()
+_builtins_input = input
 
 __main__ = types.ModuleType('__main__', __doc__)
 _main_dict = _module_vars(__main__)
