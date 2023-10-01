@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'snekdesign'
-__version__ = '2023.9.29'
+__version__ = '2023.10.2'
 __doc__ = f"""CoPyCat {__version__}
 Copyright (c) 2022-{__version__[:4]} {__author__}
 
@@ -82,7 +82,11 @@ def publics(obj=_SENTINEL):
 if _vscode := shutil.which('code') or shutil.which('code-insiders'):
     def source(obj=-1):
         if type(obj) is int:
-            frame = inspect.getinnerframes(sys.last_traceback)[obj]
+            if sys.version_info >= (3, 12):
+                tb = sys.last_exc.__traceback__
+            else:
+                tb = sys.last_traceback
+            frame = inspect.getinnerframes(tb)[obj]
             filename = frame.filename
             lineno = frame.lineno
         else:
@@ -183,8 +187,8 @@ class _SecondaryPS1:
         global _last_value
         try:
             _ps1_impl()
-        except:
-            sys.last_type, sys.last_value, sys.last_traceback = sys.exc_info()
+        except Exception as e:
+            _set_last_exc(e)
             # _ps1_impl() has cleared the screen, so just print the exception
             traceback.print_exc(file=_cat_wrapper)
             _tcflush()
@@ -414,9 +418,7 @@ def _ps1_impl():
         tb = e.__traceback__.tb_next
         while tb and inspect.getsourcefile(tb) == pprint.__file__:
             tb = tb.tb_next
-        sys.last_type = type(e)
-        sys.last_value = e.with_traceback(tb)
-        sys.last_traceback = tb
+        _set_last_exc(e.with_traceback(tb))
         _cat_clear_screen()
         _cat_wrapper.write('Object not printable\n\n')
         traceback.print_exception(e, file=_cat_wrapper)
@@ -496,6 +498,16 @@ def _repr_union(obj):
             reprs.append('None')
         return ' | '.join(reprs)
     return 'Any'
+
+
+if sys.version_info >= (3, 12):
+    def _set_last_exc(e):
+        sys.last_exc = e
+else:
+    def _set_last_exc(e):
+        sys.last_type = type(e)
+        sys.last_value = e
+        sys.last_traceback = e.__traceback__
 
 
 def _summary(obj, obj_dict, predicate, extra):
