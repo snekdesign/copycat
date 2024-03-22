@@ -26,7 +26,8 @@
   at the end of [copycat.py][6], as there are too many choices
 ### Extra dependencies for Windows
 - Windows >= 10.0.10586.0
-- `cat` from Cygwin, WSL or somewhere else  
+- `cat` from Cygwin, WSL or somewhere else
+  (The one from `uutils-coreutils` won't work, however)  
   For example, you can run the following command to use `cat` from WSL
   along with Python from Windows:
   ```sh
@@ -135,8 +136,8 @@ u: module
   `magics` without arguments, the current local namespace will be inspected.
 - If the traceback in `cat` has been wiped out and you want to print it again,
   the command `w(here)` is what you need.
-- Use the command `q(uit)` or Ctrl+Z to quit from the debugger and
-  continue your work.
+- Use the command `q(uit)` or Ctrl+D (Ctrl+Z for native Windows) to quit from
+  the debugger and continue your work.
 ### (Windows-only) Windows Terminal (`wt`) Integration
 - On Windows 11, if `wt` (stable or preview) is set to default
   terminal, `cat` will be opened inside.
